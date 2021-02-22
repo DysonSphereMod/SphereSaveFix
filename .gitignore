@@ -1,5 +1,7 @@
 *
 !/**/
+!*.json
+!*.png
 !*.cs
 !*.csproj
 

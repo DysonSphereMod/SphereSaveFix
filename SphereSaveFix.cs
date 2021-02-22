@@ -271,5 +271,77 @@ namespace SphereSaveFix
             return false;
         }
 
+
+        // patch to enable compression
+
+        /*
+        // patch to enable compression
+
+        [HarmonyPrefix, HarmonyPatch(typeof(GameSave), "SaveCurrentGame")]
+        public static bool SaveCurrentGame_Prefix(string saveName, ref bool __result)
+        {
+            Debug.Log(saveName);
+            HighStopwatch highStopwatch = new HighStopwatch();
+            highStopwatch.Begin();
+            if (DSPGame.Game == null)
+            {
+                Debug.LogError("No game to save");
+                return false;
+            }
+            GameCamera.CaptureSaveScreenShot();
+            saveName = saveName.ValidFileName();
+            string path = GameConfig.gameSaveFolder + saveName + ".compressed";
+            bool result;
+            try
+            {
+                using (FileStream fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                {
+                    // GZipStream cmp = new GZipStream(fileStream, CompressionMode.Compress);
+                    using (BinaryWriter binaryWriter = new BinaryWriter(fileStream))
+                    {
+                        binaryWriter.Write('V');
+                        binaryWriter.Write('F');
+                        binaryWriter.Write('S');
+                        binaryWriter.Write('A');
+                        binaryWriter.Write('V');
+                        binaryWriter.Write('E');
+                        binaryWriter.Write(0L);
+                        binaryWriter.Write(4);
+                        binaryWriter.Write(GameConfig.gameVersion.Major);
+                        binaryWriter.Write(GameConfig.gameVersion.Minor);
+                        binaryWriter.Write(GameConfig.gameVersion.Release);
+                        binaryWriter.Write(GameMain.gameTick);
+                        binaryWriter.Write(DateTime.Now.Ticks);
+                        if (GameMain.data.screenShot != null)
+                        {
+                            int num = GameMain.data.screenShot.Length;
+                            binaryWriter.Write(num);
+                            binaryWriter.Write(GameMain.data.screenShot, 0, num);
+                        }
+                        else
+                        {
+                            binaryWriter.Write(0);
+                        }
+                        GameMain.data.Export(binaryWriter);
+                        long position = fileStream.Position;
+                        fileStream.Seek(6L, SeekOrigin.Begin);
+                        binaryWriter.Write(position);
+                    }
+                }
+                double duration = highStopwatch.duration;
+                Debug.Log("Game save file wrote, time cost: " + duration + "s");
+                STEAMX.UploadScoreToLeaderboard(GameMain.data);
+                result = true;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                result = false;
+            }
+
+            __result = result;
+            return false;
+        }
+*/
     }
 }

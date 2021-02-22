@@ -25,6 +25,6 @@ Savegames created using this mod are NOT COMPATIBLE with the vanilla game.
 
 Fortunately for you I've added an additional button on the save screen to allow to save in the 'native' format (including all the aforementioned useless data). This means that at any moment you should be able to load a optimised game and save it in the original format.
 
-![Diet](Icon.png)
+![Diet](icon.png)
 
 <div>Icons made by <a href="https://smashicons.com/" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>

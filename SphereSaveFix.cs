@@ -4,6 +4,8 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace SphereSaveFix
 {
@@ -14,6 +16,9 @@ namespace SphereSaveFix
 
         static readonly char SAVE_FIX_VERSION = 'X';
 
+        private static bool optimiseSave = true;
+
+        internal static GameObject originalSaveGO, optimisedSaveGO;
         void Start()
         {
             harmony = new Harmony("com.brokenmass.plugin.Dyson.SphereSaveFix");
@@ -30,11 +35,69 @@ namespace SphereSaveFix
         internal void OnDestroy()
         {
             harmony.UnpatchSelf();  // For ScriptEngine hot-reloading
+            Destroy(optimisedSaveGO);
         }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(UISaveGameWindow), "_OnOpen")]
+        public static void UISaveGameWindow__OnOpen_Prefix(UISaveGameWindow __instance)
+        {
+            originalSaveGO = GameObject.Find("UI Root/Overlay Canvas/Top Windows/Save Game Window/save-button");
+
+            if (originalSaveGO != null && optimisedSaveGO == null)
+            {
+                optimisedSaveGO = Instantiate(originalSaveGO, originalSaveGO.transform.position, Quaternion.identity);
+                optimisedSaveGO.name = "optimisedSaveButton";
+                optimisedSaveGO.transform.SetParent(originalSaveGO.transform.parent);
+
+                var position = optimisedSaveGO.transform.localPosition;
+                position.x -= 200;
+                optimisedSaveGO.transform.localScale = new Vector3(1f, 1f, 1f);
+                optimisedSaveGO.transform.localPosition = position;
+
+
+                var optimisedSaveButton = optimisedSaveGO.GetComponent<Button>();
+                optimisedSaveButton.onClick.AddListener(new UnityAction(() =>
+                {
+                    optimiseSave = true;
+                    if (optimisedSaveButton.interactable)
+                    {
+                        __instance.SaveGameAs();
+                    }
+                }));
+
+            }
+
+            optimisedSaveGO.GetComponentInChildren<Text>().text = "Optimised Save";
+            optimisedSaveGO.GetComponent<Button>().interactable = true;
+        }
+
+        [HarmonyPrefix, HarmonyPatch(typeof(UISaveGameWindow), "OnSaveClick")]
+        public static void UISaveGameWindow_OnSaveClick_Prefix(UISaveGameWindow __instance)
+        {
+            optimiseSave = false;
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(UISaveGameWindow), "CheckAndSetSaveButtonEnable")]
+        public static void UISaveGameWindow_CheckAndSetSaveButtonEnable_Postfix(UIButton ___saveButton)
+        {
+            optimisedSaveGO.GetComponent<Button>().interactable = ___saveButton.button.interactable;
+        }
+
+        [HarmonyPostfix, HarmonyPatch(typeof(GameSave), "SaveCurrentGame")]
+        public static void GameSave_SaveCurrentGame_Postfix()
+        {
+            optimiseSave = true;
+        }
+
 
         [HarmonyPrefix, HarmonyPatch(typeof(DysonShell), "Export")]
         public static bool DysonShell_Export_Prefix(DysonShell __instance, BinaryWriter w)
         {
+            if(!optimiseSave)
+            {
+                return true;
+            }
+
             w.Write(SAVE_FIX_VERSION);
             w.Write(__instance.id);
             w.Write(__instance.protoId);
@@ -70,7 +133,7 @@ namespace SphereSaveFix
             w.Write(__instance.vertsq.Length);
             w.Write(__instance.vertsqOffset.Length);
 
-            // the nodecps and vertcps (that gets updated every time a new piece of the shell has been completed) must be saved
+            // the nodecps and vertcps (that gets updated every time a new piece of the shell has been completed) must be saved.
             // a further optimisation could be to tag a shell as 'complete' and at that point there would be no need to store
             // all this data
 
@@ -93,6 +156,7 @@ namespace SphereSaveFix
             {
                 w.Write(__instance.vertRecycle[num7]);
             }
+
             return false;
         }
 

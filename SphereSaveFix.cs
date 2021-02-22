@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace SphereSaveFix
 {
-    [BepInPlugin("com.brokenmass.plugin.Dyson.SphereSaveFix", "SphereSaveFix", "1.0.0")]
+    [BepInPlugin("com.brokenmass.plugin.Dyson.SphereSaveFix", "SphereSaveFix", "1.0.1")]
     public class SphereSaveFix : BaseUnityPlugin
     {
         Harmony harmony;
